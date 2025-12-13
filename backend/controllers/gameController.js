@@ -2,24 +2,45 @@ const Leaderboard = require('../models/Leaderboard');
 const CompletedGame = require('../models/CompletedGame');
 
 // Save a completed game
-async function saveCompletedGame(game) {
-  const completed = new CompletedGame(game);
-  await completed.save();
+async function saveCompletedGame(gameObject) {
+  try {
+    const duration = Date.now() - gameObject.createdAt; // Duration in milliseconds
+    const completedGame = new CompletedGame({
+      gameId: gameObject.gameId,
+      player1: gameObject.players[0].username,
+      player2: gameObject.players[1] ? gameObject.players[1].username : 'Bot',
+      winner: gameObject.winner ? gameObject.winner.username : null,
+      duration: Math.floor(duration / 1000), // Convert to seconds
+      createdAt: new Date(gameObject.createdAt),
+    });
+    await completedGame.save();
+  } catch (error) {
+    console.log('Error saving completed game:', error.message);
+  }
 }
 
-// Upsert leaderboard: increment wins for winner, or create if not exists
-async function updateLeaderboard(winnerUsername) {
-  if (!winnerUsername) return;
-  await Leaderboard.findOneAndUpdate(
-    { username: winnerUsername },
-    { $inc: { wins: 1 } },
-    { upsert: true, new: true }
-  );
+// Update leaderboard: increment wins for the winner
+async function updateLeaderboard(username) {
+  try {
+    if (!username) return;
+    await Leaderboard.findOneAndUpdate(
+      { username },
+      { $inc: { wins: 1 } },
+      { upsert: true, new: true }
+    );
+  } catch (error) {
+    console.log('Error updating leaderboard:', error.message);
+  }
 }
 
-// Get top 10 leaderboard by wins
+// Get top 10 leaderboard sorted by wins descending
 async function getLeaderboard() {
-  return Leaderboard.find().sort({ wins: -1 }).limit(10).lean();
+  try {
+    return await Leaderboard.find().sort({ wins: -1 }).limit(10).lean();
+  } catch (error) {
+    console.log('Error getting leaderboard:', error.message);
+    return [];
+  }
 }
 
 module.exports = {

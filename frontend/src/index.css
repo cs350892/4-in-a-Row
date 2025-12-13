@@ -1,51 +1,299 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-a:hover {
-  color: #535bf2;
+/* Global styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* App styles */
+.app-container {
   min-height: 100vh;
+  background-color: #f3f4f6;
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+.app-header {
+  background-color: #2563eb;
+  color: white;
+  padding: 1rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
+.app-title {
+  font-size: 1.25rem;
+  font-weight: bold;
+}
+
+.app-username {
+  font-size: 0.875rem;
+}
+
+.app-main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  gap: 2rem;
+}
+
+@media (min-width: 1024px) {
+  .app-main {
+    flex-direction: row;
+  }
+}
+
+.game-section {
+  width: 100%;
+  max-width: 36rem;
+}
+
+.leaderboard-section {
+  width: 100%;
+  max-width: 20rem;
+  margin-top: 2rem;
+}
+
+@media (min-width: 1024px) {
+  .leaderboard-section {
+    margin-top: 0;
+  }
+}
+
+/* Login styles */
+.login-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background-color: #f3f4f6;
+}
+
+.login-form {
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+  width: 100%;
+  max-width: 20rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.login-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 1.5rem;
+  color: #1f2937;
+}
+
+.login-input {
+  margin-bottom: 1rem;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.25rem;
+  outline: none;
+}
+
+.login-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.login-button {
+  width: 100%;
+  background-color: #2563eb;
+  color: white;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  border: none;
   cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  transition: background-color 0.2s;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
+.login-button:hover {
+  background-color: #1d4ed8;
+}
+
+/* GameBoard styles */
+.gameboard-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 2rem;
+}
+
+.gameboard-status {
+  margin-bottom: 1rem;
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: #374151;
+}
+
+.gameboard-grid {
+  display: grid;
+  grid-template-rows: repeat(6, 1fr);
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.25rem;
+  background-color: #bfdbfe;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+}
+
+.gameboard-cell {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+}
+
+.gameboard-cell.bg-red-500 {
+  background-color: #ef4444;
+}
+
+.gameboard-cell.bg-yellow-400 {
+  background-color: #fbbf24;
+}
+
+.gameboard-cell.bg-gray-300 {
+  background-color: #d1d5db;
+}
+
+.gameboard-controls {
+  display: flex;
+  margin-top: 1rem;
+  gap: 0.25rem;
+}
+
+.gameboard-btn {
+  width: 2.5rem;
+  height: 2rem;
+  background-color: #3b82f6;
+  color: white;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  border: none;
+  cursor: pointer;
+}
+
+.gameboard-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.gameboard-finish-status {
+  margin-top: 1.5rem;
+  font-size: 1.875rem;
+  font-weight: bold;
+  color: #1f2937;
+}
+
+/* Leaderboard styles */
+.leaderboard-container {
+  max-width: 28rem;
+  margin: 2.5rem auto 0;
+  background-color: white;
+  border-radius: 0.25rem;
+  padding: 1.5rem;
+  border: 1px solid #d1d5db;
+}
+
+.leaderboard-title {
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.leaderboard-loading,
+.leaderboard-empty {
+  text-align: center;
+  color: #6b7280;
+}
+
+.leaderboard-table {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  font-size: 0.875rem;
+}
+
+.leaderboard-header-row {
+  background-color: #f3f4f6;
+}
+
+.leaderboard-header {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid #d1d5db;
+}
+
+.leaderboard-row-alt {
+  background-color: #f9fafb;
+}
+
+.leaderboard-cell {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid #d1d5db;
+}
+
+.leaderboard-rank,
+.leaderboard-wins {
+  text-align: center;
+}
+
+/* WaitingScreen styles */
+.waiting-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background-color: #eff6ff;
+}
+
+.waiting-content {
+  margin-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.waiting-spinner {
+  width: 4rem;
+  height: 4rem;
+  border: 4px solid #bfdbfe;
+  border-top: 4px solid #2563eb;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1.5rem;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
   }
-  a:hover {
-    color: #747bff;
+  100% {
+    transform: rotate(360deg);
   }
-  button {
-    background-color: #f9f9f9;
-  }
+}
+
+.waiting-title {
+  font-size: 1.875rem;
+  font-weight: bold;
+  color: #1d4ed8;
+  margin-bottom: 0.5rem;
+}
+
+.waiting-desc {
+  color: #4b5563;
+  font-size: 0.875rem;
 }

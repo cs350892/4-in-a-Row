@@ -1,11 +1,11 @@
 const mongoose = require('mongoose');
 
 const CompletedGameSchema = new mongoose.Schema({
-  gameId: { type: String, required: true },
-  player1: { type: String, required: true },
-  player2: { type: String, required: true },
+  gameId: String,
+  player1: String,
+  player2: String, // or "Bot"
   winner: { type: String, default: null }, // null for draw
-  duration: { type: Number, required: true }, // seconds
+  duration: Number, // seconds
   createdAt: { type: Date, default: Date.now },
 });
 
