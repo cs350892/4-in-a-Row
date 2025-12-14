@@ -47,9 +47,9 @@ function minimax(board, depth, alpha, beta, maximizing, botValue, opponentValue)
     let maxEval = -Infinity;
     for (const col of validMoves) {
       const newBoard = makeMove(board, col, botValue);
-      const eval = minimax(newBoard, depth - 1, alpha, beta, false, botValue, opponentValue);
-      maxEval = Math.max(maxEval, eval);
-      alpha = Math.max(alpha, eval);
+      const evaluation = minimax(newBoard, depth - 1, alpha, beta, false, botValue, opponentValue);
+      maxEval = Math.max(maxEval, evaluation);
+      alpha = Math.max(alpha, evaluation);
       if (beta <= alpha) break; // Alpha-beta pruning
     }
     return maxEval;
@@ -58,9 +58,9 @@ function minimax(board, depth, alpha, beta, maximizing, botValue, opponentValue)
     let minEval = Infinity;
     for (const col of validMoves) {
       const newBoard = makeMove(board, col, opponentValue);
-      const eval = minimax(newBoard, depth - 1, alpha, beta, true, botValue, opponentValue);
-      minEval = Math.min(minEval, eval);
-      beta = Math.min(beta, eval);
+      const evaluation = minimax(newBoard, depth - 1, alpha, beta, true, botValue, opponentValue);
+      minEval = Math.min(minEval, evaluation);
+      beta = Math.min(beta, evaluation);
       if (beta <= alpha) break; // Alpha-beta pruning
     }
     return minEval;

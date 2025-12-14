@@ -17,8 +17,8 @@ class Queue {
         const player1Data = this.waitingPlayers.shift();
         const player2Data = this.waitingPlayers.shift();
         const gameId = uuidv4();
-        const player1 = new Player(player1Data.id, player1Data.username);
-        const player2 = new Player(player2Data.id, player2Data.username);
+        const player1 = new Player(player1Data.id, player1Data.username, 'R');
+        const player2 = new Player(player2Data.id, player2Data.username, 'Y');
         const game = new Game(gameId, player1);
         game.addSecondPlayer(player2);
         this.activeGames.set(gameId, game);
@@ -30,8 +30,8 @@ class Queue {
             // Still waiting, pair with bot
             this.waitingPlayers = this.waitingPlayers.filter(p => p !== playerData);
             const gameId = uuidv4();
-            const player1 = new Player(playerData.id, playerData.username);
-            const bot = new Player('bot', 'Bot');
+            const player1 = new Player(playerData.id, playerDataData.username, 'R');
+            const bot = new Player('bot', 'Bot', 'Y');
             const game = new Game(gameId, player1);
             game.addSecondPlayer(bot);
             this.activeGames.set(gameId, game);
