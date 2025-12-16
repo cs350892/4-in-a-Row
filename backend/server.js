@@ -24,10 +24,33 @@ const server = http.createServer(app);
 // Configure Socket.IO with CORS
 const io = socketIo(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || ["http://localhost:3000", "http://localhost:5173"],
+    origin: function (origin, callback) {
+      // Allow requests with no origin (mobile apps, bots, etc.)
+      if (!origin) return callback(null, true);
+
+      const allowedOrigins = [
+        process.env.FRONTEND_URL,
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "https://four-in-a-row-zu20.onrender.com", // Your deployed frontend
+        "*" // Allow all origins for development (be careful in production)
+      ].filter(Boolean);
+
+      if (allowedOrigins.includes("*") || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      console.log(`🚫 CORS blocked origin: ${origin}`);
+      return callback(new Error('Not allowed by CORS'));
+    },
     methods: ["GET", "POST"],
     credentials: true
-  }
+  },
+  // Additional socket.io options
+  pingTimeout: 60000, // 60 seconds
+  pingInterval: 25000, // 25 seconds
+  transports: ['websocket', 'polling']
+});
 });
 
 // Middleware
