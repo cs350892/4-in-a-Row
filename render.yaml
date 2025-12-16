@@ -1,0 +1,30 @@
+services:
+  # Backend Service
+  - type: web
+    name: 4-in-a-row-backend
+    runtime: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: FRONTEND_URL
+        sync: false
+
+  # Frontend Service
+  - type: web
+    name: 4-in-a-row-frontend
+    runtime: static
+    buildCommand: npm run build
+    staticPublishPath: ./dist
+    envVars:
+      - key: VITE_BACKEND_URL
+        sync: false
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
