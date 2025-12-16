@@ -12,51 +12,34 @@ const initializeSocket = (socketIo) => {
   io = socketIo;
   
   io.on('connection', (socket) => {
-    console.log(`🔗 New connection: ${socket.id} from ${socket.handshake.address}`);
-
-    // Optional authentication for human players
+    console.log(`🔗 New connection: ${socket.id}`);
+    
+    // User joins with auth
     socket.on('authenticate', async (token) => {
       try {
         // In real app, verify JWT token
         const { userId, username } = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
-
+        
         // Update user online status
-        await User.findByIdAndUpdate(userId, {
+        await User.findByIdAndUpdate(userId, { 
           isOnline: true,
           lastSeen: new Date()
         });
-
+        
         socket.userId = userId;
         socket.username = username;
-        socket.authenticated = true;
-
-        console.log(`✅ User authenticated: ${username} (${userId})`);
+        
         socket.emit('authenticated', { userId, username });
       } catch (error) {
         console.error('Authentication error:', error);
         socket.emit('auth_error', { message: 'Invalid token' });
       }
     });
-
-    // Handle bot connections (no authentication required)
-    socket.on('joinQueue', async ({ username, gameType, isBot }) => {
+    
+    // Join matchmaking queue
+    socket.on('joinQueue', async ({ username, gameType }) => {
       try {
-        console.log(`Join queue request: username=${username}, gameType=${gameType}, isBot=${isBot}, socketId=${socket.id}`);
-
-        // Mark socket as bot if specified
-        if (isBot) {
-          socket.isBot = true;
-          socket.username = username || 'Bot';
-          console.log(`🤖 Bot connected: ${socket.username}`);
-        }
-
-        if (gameType === 'local' || gameType === 'vsBot') {
-          // Create local or bot game
-          console.log('Creating game for type:', gameType);
-          const game = await createGame(socket, username, gameType);
-          console.log('Game created successfully:', game.gameId);
-          socket.emit('gameStart', game);
-        } else {
+        console.log(`Join queue request: username=${username}, gameType=${gameType}, socketId=${socket.id}`);
         
         if (gameType === 'local' || gameType === 'vsBot') {
           // Create local or bot game
