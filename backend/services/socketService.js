@@ -210,7 +210,7 @@ const createGame = async (socket, username, gameType) => {
   const game = new Game({
     gameId: generateGameId(),
     player1: {
-      userId: socket.userId ? mongoose.Types.ObjectId(socket.userId) : null, // Only set if authenticated
+      userId: socket.userId ? new mongoose.Types.ObjectId(socket.userId) : null, // Only set if authenticated
       username: username || socket.username || 'Player 1',
       color: 'red'
     },
