@@ -1,6 +1,7 @@
 const Game = require('../models/Game');
 const User = require('../models/User');
 const botController = require('../controllers/botController');
+const mongoose = require('mongoose');
 
 let io;
 const waitingPlayers = new Map(); // socketId -> {userId, username}
@@ -38,9 +39,13 @@ const initializeSocket = (socketIo) => {
     // Join matchmaking queue
     socket.on('joinQueue', async ({ username, gameType }) => {
       try {
+        console.log(`Join queue request: username=${username}, gameType=${gameType}, socketId=${socket.id}`);
+        
         if (gameType === 'local' || gameType === 'vsBot') {
           // Create local or bot game
+          console.log('Creating game for type:', gameType);
           const game = await createGame(socket, username, gameType);
+          console.log('Game created successfully:', game.gameId);
           socket.emit('gameStart', game);
         } else {
           // Online multiplayer
@@ -51,6 +56,7 @@ const initializeSocket = (socketIo) => {
         }
       } catch (error) {
         console.error('Join queue error:', error);
+        console.error('Error stack:', error.stack);
         socket.emit('error', { message: 'Failed to join queue' });
       }
     });
@@ -101,12 +107,21 @@ const initializeSocket = (socketIo) => {
           removePlayerFromGame(getOpponentSocketId(game, player));
         } else if (game.player2.isBot) {
           // If playing against bot, trigger bot move after delay
-          setTimeout(async () => {
-            const updatedGame = await botController.botMove(gameId);
-            if (updatedGame) {
-              io.to(gameId).emit('gameUpdate', updatedGame);
-            }
-          }, 1000);
+          console.log(`Triggering bot move for game ${gameId} after player move, currentPlayer: ${game.currentPlayer}`);
+          if (game.currentPlayer === 'player2') {
+            setTimeout(async () => {
+              console.log(`Executing bot move for game ${gameId}`);
+              const updatedGame = await botController.botMove(gameId);
+              if (updatedGame) {
+                console.log(`Bot move successful, emitting gameUpdate for game ${gameId}`);
+                io.to(gameId).emit('gameUpdate', updatedGame);
+              } else {
+                console.log(`Bot move failed for game ${gameId}`);
+              }
+            }, 1000);
+          } else {
+            console.log(`Not triggering bot move, currentPlayer is ${game.currentPlayer}`);
+          }
         }
       } catch (error) {
         console.error('Make move error:', error);
@@ -160,6 +175,13 @@ const initializeSocket = (socketIo) => {
     socket.on('disconnect', () => {
       console.log(`🔌 Disconnected: ${socket.id}`);
       
+      // Clear any BOT timer for this player
+      if (gameTimers.has(socket.id)) {
+        clearTimeout(gameTimers.get(socket.id));
+        gameTimers.delete(socket.id);
+        console.log(`⏰ Cleared BOT timer for disconnected player ${socket.id}`);
+      }
+      
       // Remove from waiting players
       waitingPlayers.delete(socket.id);
       
@@ -183,16 +205,20 @@ const initializeSocket = (socketIo) => {
 
 // Helper functions
 const createGame = async (socket, username, gameType) => {
+  console.log('createGame called with:', { socketId: socket.id, username, gameType, userId: socket.userId });
+  
   const game = new Game({
     gameId: generateGameId(),
     player1: {
-      userId: socket.userId,
-      username: username || socket.username,
+      userId: socket.userId ? mongoose.Types.ObjectId(socket.userId) : null, // Only set if authenticated
+      username: username || socket.username || 'Player 1',
       color: 'red'
     },
     gameType,
     status: gameType === 'vsBot' ? 'playing' : 'waiting'
   });
+  
+  console.log('Game object created:', game.gameId);
   
   if (gameType === 'vsBot') {
     game.player2 = {
@@ -201,21 +227,26 @@ const createGame = async (socket, username, gameType) => {
       color: 'yellow',
       isBot: true
     };
+    console.log('Player2 set for vsBot game');
   }
   
+  console.log('About to save game...');
   await game.save();
+  console.log('Game saved successfully');
   
   socket.join(game.gameId);
   playerGames.set(socket.id, game.gameId);
   
-  return game.getGameState();
+  const gameState = game.getGameState();
+  console.log('Game state returned:', gameState.gameId);
+  return gameState;
 };
 
 const tryMatchmaking = async (socket) => {
   // Find another waiting player
   for (const [otherSocketId, otherPlayer] of waitingPlayers.entries()) {
     if (otherSocketId !== socket.id) {
-      // Create game
+      // Create game with two human players
       const game = new Game({
         gameId: generateGameId(),
         player1: {
@@ -250,45 +281,98 @@ const tryMatchmaking = async (socket) => {
       waitingPlayers.delete(socket.id);
       waitingPlayers.delete(otherSocketId);
       
+      // Clear any existing timers
+      if (gameTimers.has(socket.id)) {
+        clearTimeout(gameTimers.get(socket.id));
+        gameTimers.delete(socket.id);
+      }
+      if (gameTimers.has(otherSocketId)) {
+        clearTimeout(gameTimers.get(otherSocketId));
+        gameTimers.delete(otherSocketId);
+      }
+      
       // Notify both players
       const gameState = game.getGameState();
       io.to(game.gameId).emit('gameStart', gameState);
       
+      console.log(`🎮 Game ${game.gameId} started between ${otherPlayer.username} and ${socket.username}`);
       return;
     }
   }
   
-  // No match found, create solo game and start timer for bot
-  const game = new Game({
-    gameId: generateGameId(),
-    player1: {
-      userId: socket.userId,
-      username: socket.username,
-      color: 'red'
-    },
-    gameType: 'online',
-    status: 'waiting'
-  });
+  // No match found, start BOT timer for this player
+  console.log(`⏳ No match found for ${socket.username}, starting 10-second BOT timer`);
   
-  await game.save();
-  
-  socket.join(game.gameId);
-  playerGames.set(socket.id, game.gameId);
-  
-  socket.emit('waiting', { gameId: game.gameId });
-  
-  // Start timer for bot to join
-  const timer = setTimeout(async () => {
-    const updatedGame = await botController.addBotToGame(game.gameId);
-    if (updatedGame) {
-      io.to(game.gameId).emit('gameStart', updatedGame);
+  const botTimer = setTimeout(async () => {
+    console.log(`🤖 10 seconds passed, adding BOT for ${socket.username}`);
+    
+    // Check if player is still waiting (not matched yet)
+    if (waitingPlayers.has(socket.id)) {
+      // Create game with BOT
+      const game = new Game({
+        gameId: generateGameId(),
+        player1: {
+          userId: socket.userId,
+          username: socket.username,
+          color: 'red'
+        },
+        player2: {
+          userId: null,
+          username: 'Computer',
+          color: 'yellow',
+          isBot: true
+        },
+        gameType: 'online', // Still online type but with BOT
+        status: 'playing',
+        startedAt: new Date()
+      });
+      
+      await game.save();
+      
+      // Join game room
+      socket.join(game.gameId);
+      playerGames.set(socket.id, game.gameId);
+      
+      // Remove from waiting players
+      waitingPlayers.delete(socket.id);
+      
+      // Clear timer
+      gameTimers.delete(socket.id);
+      
+      // Notify player
+      const gameState = game.getGameState();
+      socket.emit('gameStart', gameState);
+      
+      console.log(`🎮 Game ${game.gameId} started: ${socket.username} vs BOT`);
+      
+      // If BOT goes first, trigger BOT move immediately
+      if (game.currentPlayer === 'player2') {
+        setTimeout(async () => {
+          console.log(`🤖 BOT making first move in game ${game.gameId}`);
+          const updatedGame = await botController.botMove(game.gameId);
+          if (updatedGame) {
+            io.to(game.gameId).emit('gameUpdate', updatedGame);
+          }
+        }, 1000);
+      }
     }
   }, 10000); // 10 seconds
   
-  gameTimers.set(game.gameId, timer);
+  // Store timer reference
+  gameTimers.set(socket.id, botTimer);
 };
 
 const getPlayerType = (socket, game) => {
+  // For vsBot games, the socket that created the game is player1
+  if (game.gameType === 'vsBot') {
+    const socketGameId = playerGames.get(socket.id);
+    if (socketGameId === game.gameId) {
+      return 'player1';
+    }
+    return null;
+  }
+  
+  // For regular games, check userId
   if (game.player1.userId && game.player1.userId.toString() === socket.userId) {
     return 'player1';
   }
