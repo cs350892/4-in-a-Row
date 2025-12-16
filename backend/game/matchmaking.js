@@ -30,7 +30,7 @@ class Queue {
             // Still waiting, pair with bot
             this.waitingPlayers = this.waitingPlayers.filter(p => p !== playerData);
             const gameId = uuidv4();
-            const player1 = new Player(playerData.id, playerDataData.username, 'R');
+            const player1 = new Player(playerData.id, playerData.username, 'R');
             const bot = new Player('bot', 'Bot', 'Y');
             const game = new Game(gameId, player1);
             game.addSecondPlayer(bot);
