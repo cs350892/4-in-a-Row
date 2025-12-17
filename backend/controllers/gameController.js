@@ -210,7 +210,7 @@ exports.updateGameResults = async (game) => {
       },
       winner: game.winner,
       moves: game.moves.length,
-      duration: game.finishedAt - game.startedAt,
+      duration: Math.floor((game.finishedAt - game.startedAt) / 1000),
       boardState: game.board,
       gameType: game.gameType
     });

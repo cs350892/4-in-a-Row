@@ -227,6 +227,7 @@ const createGame = async (socket, username, gameType) => {
       color: 'yellow',
       isBot: true
     };
+    game.startedAt = new Date();
     console.log('Player2 set for vsBot game');
   }
   
