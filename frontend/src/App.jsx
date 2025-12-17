@@ -23,6 +23,23 @@ function App() {
         console.log('Connected to server');
       });
       
+      newSocket.on('connect_error', (error) => {
+        console.error('Connection error:', error);
+        alert('Failed to connect to server: ' + error.message);
+      });
+      
+      newSocket.on('disconnect', (reason) => {
+        console.log('Disconnected from server:', reason);
+        if (reason === 'io server disconnect') {
+          // Server disconnected, try reconnecting
+          alert('Server disconnected. Attempting to reconnect...');
+        } else if (reason === 'io client disconnect') {
+          console.log('Client disconnected');
+        } else {
+          alert('Connection lost: ' + reason);
+        }
+      });
+      
       newSocket.on('gameStart', (data) => {
         console.log('Game started:', data);
         setGameState(data);

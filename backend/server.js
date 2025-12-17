@@ -27,7 +27,10 @@ const io = socketIo(server, {
     origin: process.env.FRONTEND_URL || ["http://localhost:3000", "http://localhost:5173"],
     methods: ["GET", "POST"],
     credentials: true
-  }
+  },
+  pingTimeout: 60000,  // Increase ping timeout to 60 seconds
+  pingInterval: 25000, // Ping every 25 seconds
+  connectTimeout: 60000 // Connection timeout 60 seconds
 });
 
 // Middleware
